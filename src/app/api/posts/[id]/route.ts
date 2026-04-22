@@ -26,3 +26,28 @@ export async function GET(
 
   return NextResponse.json(post);
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Non autorise" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const result = await prisma.post.deleteMany({
+    where: { id, userId: session.user.id },
+  });
+
+  if (result.count === 0) {
+    return NextResponse.json(
+      { error: "Article introuvable" },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({ ok: true });
+}

@@ -100,22 +100,21 @@ function DashboardContent() {
         <div className="space-y-3">
           {posts.map((post) => {
             const statusInfo = STATUS_LABELS[post.status];
+            const clickable = post.status === "COMPLETED";
+            const isFailed = post.status === "FAILED";
             return (
-              <Link
+              <div
                 key={post.id}
-                href={
-                  post.status === "COMPLETED"
-                    ? `/dashboard/posts/${post.id}`
-                    : "#"
-                }
-                className={`block border border-border rounded-lg p-4 hover:border-primary/30 transition-colors ${
-                  post.status !== "COMPLETED"
-                    ? "opacity-70 cursor-default"
-                    : ""
+                className={`border border-border rounded-lg p-4 transition-colors ${
+                  clickable ? "hover:border-primary/30" : "opacity-70"
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
+                  <ConditionalLink
+                    href={`/dashboard/posts/${post.id}`}
+                    active={clickable}
+                    className="flex-1 min-w-0"
+                  >
                     <h3 className="font-medium truncate">
                       {post.title || post.topic}
                     </h3>
@@ -127,20 +126,58 @@ function DashboardContent() {
                       })}
                       {post.wordCount && ` — ${post.wordCount} mots`}
                     </p>
+                  </ConditionalLink>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${statusInfo.color}`}
+                    >
+                      {statusInfo.label}
+                    </span>
+                    {isFailed && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!confirm("Supprimer cet article echoue ?")) return;
+                          const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
+                          if (res.ok) {
+                            setPosts((prev) => prev.filter((p) => p.id !== post.id));
+                          }
+                        }}
+                        className="text-xs text-error hover:underline"
+                      >
+                        Supprimer
+                      </button>
+                    )}
                   </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${statusInfo.color}`}
-                  >
-                    {statusInfo.label}
-                  </span>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
       )}
     </div>
   );
+}
+
+function ConditionalLink({
+  href,
+  active,
+  className,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  if (active) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return <div className={className}>{children}</div>;
 }
 
 export default function DashboardPage() {

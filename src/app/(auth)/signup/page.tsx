@@ -57,7 +57,7 @@ export default function SignupPage() {
       <div className="w-full max-w-sm">
         <h1 className="text-2xl font-bold text-center mb-2">Creer un compte</h1>
         <p className="text-center text-sm text-muted mb-8">
-          3 articles gratuits par mois — sans carte bancaire
+          5 articles gratuits par mois — sans carte bancaire
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getBlogQueue } from "@/lib/queue";
 
-const FREE_MONTHLY_LIMIT = 3;
+const FREE_MONTHLY_LIMIT = 5;
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { business, topic } = await request.json();
+    const { business, topic, format, pillar } = await request.json();
 
     if (!business || !topic) {
       return NextResponse.json(
@@ -21,8 +21,16 @@ export async function POST(request: Request) {
       );
     }
 
+    const FORMATS = ["BLOG", "LINKEDIN", "CAROUSEL", "THREAD"] as const;
+    type AllowedFormat = (typeof FORMATS)[number];
+    const chosenFormat: AllowedFormat = FORMATS.includes(format as AllowedFormat)
+      ? (format as AllowedFormat)
+      : "LINKEDIN";
+    const chosenPillar: string | null = typeof pillar === "string" && pillar.trim() ? pillar.trim() : null;
+
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
+      include: { brandVoice: { select: { id: true } } },
     });
 
     if (!user) {
@@ -32,29 +40,40 @@ export async function POST(request: Request) {
       );
     }
 
-    // Reset monthly counter if new month
-    const now = new Date();
-    const resetDate = new Date(user.monthResetAt);
-    if (
-      now.getMonth() !== resetDate.getMonth() ||
-      now.getFullYear() !== resetDate.getFullYear()
-    ) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { postsThisMonth: 0, monthResetAt: now },
-      });
-      user.postsThisMonth = 0;
-    }
-
-    // Check free tier limit
-    if (user.plan === "FREE" && user.postsThisMonth >= FREE_MONTHLY_LIMIT) {
+    if ((chosenFormat === "CAROUSEL" || chosenFormat === "THREAD") && !user.brandVoice) {
       return NextResponse.json(
         {
-          error: `Vous avez atteint la limite de ${FREE_MONTHLY_LIMIT} articles gratuits ce mois-ci. Passez au Pro pour des articles illimites !`,
-          code: "LIMIT_REACHED",
+          error:
+            "Ce format requiert une voix de marque. Configurez-la dans vos parametres avant de continuer.",
+          code: "VOICE_REQUIRED",
         },
-        { status: 403 }
+        { status: 400 }
       );
+    }
+
+    // Count posts this calendar month, excluding FAILED (failed generations
+    // should not eat into the free quota). We rely on a live COUNT instead
+    // of the postsThisMonth counter so deletions and failures self-correct.
+    if (user.plan === "FREE") {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const countThisMonth = await prisma.post.count({
+        where: {
+          userId: user.id,
+          status: { not: "FAILED" },
+          createdAt: { gte: monthStart },
+        },
+      });
+
+      if (countThisMonth >= FREE_MONTHLY_LIMIT) {
+        return NextResponse.json(
+          {
+            error: `Vous avez atteint la limite de ${FREE_MONTHLY_LIMIT} articles gratuits ce mois-ci. Passez au Pro pour des articles illimites !`,
+            code: "LIMIT_REACHED",
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // Create post and queue job
@@ -63,6 +82,8 @@ export async function POST(request: Request) {
         userId: user.id,
         business,
         topic,
+        format: chosenFormat,
+        pillar: chosenPillar,
         status: "PENDING",
       },
     });
@@ -71,13 +92,15 @@ export async function POST(request: Request) {
       postId: post.id,
       business,
       topic,
+      format: chosenFormat,
+      pillar: chosenPillar,
       longForm: user.plan === "PRO",
     });
 
-    // Increment monthly counter
+    // Remember business for next time (counter is now derived from post rows).
     await prisma.user.update({
       where: { id: user.id },
-      data: { postsThisMonth: { increment: 1 } },
+      data: { business },
     });
 
     return NextResponse.json({ postId: post.id, jobId: job.id });

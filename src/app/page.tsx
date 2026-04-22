@@ -23,7 +23,7 @@ export default function HomePage() {
             Commencer gratuitement
           </Link>
           <p className="mt-3 text-sm text-muted">
-            3 articles gratuits par mois — sans carte bancaire
+            5 articles gratuits par mois — sans carte bancaire
           </p>
         </div>
       </section>
@@ -73,9 +73,9 @@ export default function HomePage() {
       <section className="py-16 bg-surface">
         <div className="mx-auto max-w-4xl px-4">
           <h2 className="text-2xl font-bold text-center mb-12">
-            Tarifs simples
+            Gratuit pendant la beta
           </h2>
-          <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+          <div className="max-w-md mx-auto">
             <div className="bg-white rounded-xl border border-border p-6">
               <h3 className="font-semibold text-lg mb-1">Gratuit</h3>
               <p className="text-3xl font-bold mb-4">
@@ -83,39 +83,17 @@ export default function HomePage() {
                 <span className="text-sm text-muted font-normal">/mois</span>
               </p>
               <ul className="space-y-2 text-sm text-muted mb-6">
-                <li>3 articles par mois</li>
-                <li>Articles standards (~800 mots)</li>
-                <li>Meta description SEO</li>
-                <li>Historique des 5 derniers articles</li>
-              </ul>
-              <Link
-                href="/signup"
-                className="block text-center border border-primary text-primary px-4 py-2 rounded-lg hover:bg-primary/5"
-              >
-                Commencer
-              </Link>
-            </div>
-            <div className="bg-white rounded-xl border-2 border-primary p-6 relative">
-              <span className="absolute -top-3 right-4 bg-primary text-white text-xs px-3 py-1 rounded-full">
-                Populaire
-              </span>
-              <h3 className="font-semibold text-lg mb-1">Pro</h3>
-              <p className="text-3xl font-bold mb-4">
-                9 &euro;
-                <span className="text-sm text-muted font-normal">/mois</span>
-              </p>
-              <ul className="space-y-2 text-sm text-muted mb-6">
-                <li>Articles illimites</li>
-                <li>Articles longs (~2000 mots)</li>
-                <li>Meta description SEO</li>
-                <li>Suggestions de sujets IA</li>
-                <li>Historique illimite</li>
+                <li>5 articles par mois</li>
+                <li>Articles SEO (~800 mots)</li>
+                <li>Meta description optimisee</li>
+                <li>Historique de vos articles</li>
+                <li>Sans carte bancaire</li>
               </ul>
               <Link
                 href="/signup"
                 className="block text-center bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark"
               >
-                Passer au Pro
+                Commencer gratuitement
               </Link>
             </div>
           </div>

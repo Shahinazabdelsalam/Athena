@@ -19,22 +19,45 @@ enum PostStatus {
   FAILED
 }
 
+enum PostFormat {
+  BLOG
+  LINKEDIN
+  CAROUSEL
+  THREAD
+}
+
 model User {
-  id                   String    @id @default(cuid())
-  email                String    @unique
+  id                   String      @id @default(cuid())
+  email                String      @unique
   name                 String?
   passwordHash         String?
   image                String?
-  plan                 Plan      @default(FREE)
-  stripeCustomerId     String?   @unique
-  stripeSubscriptionId String?   @unique
-  postsThisMonth       Int       @default(0)
-  monthResetAt         DateTime  @default(now())
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  business             String?
+  plan                 Plan        @default(FREE)
+  stripeCustomerId     String?     @unique
+  stripeSubscriptionId String?     @unique
+  postsThisMonth       Int         @default(0)
+  monthResetAt         DateTime    @default(now())
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
   posts                Post[]
   accounts             Account[]
   sessions             Session[]
+  brandVoice           BrandVoice?
+}
+
+model BrandVoice {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  soul             String
+  audience         String
+  toneRules        String[]
+  bannedWords      String[]
+  mandatoryAnchors String[]
+  pillars          Json
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Post {
@@ -43,15 +66,20 @@ model Post {
   user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   business        String
   topic           String
+  format          PostFormat @default(LINKEDIN)
   title           String?
   content         String?
   metaDescription String?
   wordCount       Int?
-  status          PostStatus @default(PENDING)
-  jobId           String?
-  error           String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  charCount       Int?
+  status           PostStatus @default(PENDING)
+  jobId            String?
+  error            String?
+  pillar           String?
+  alternativeHooks String[]
+  followUpIdeas    String[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   @@index([userId, createdAt(sort: Desc)])
 }
